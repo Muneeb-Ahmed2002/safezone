@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:safezone/UI/GettingStarted.dart';
 import 'package:safezone/UI/HomePage.dart';
+import 'package:safezone/global%20variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,12 +17,15 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(
-      const Duration(seconds: 2),
-          () => Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const GettingStarted()),
-      ),
-    );
+      const Duration(seconds: 2), ()
+    async {
+      final prefs = await SharedPreferences.getInstance();
+      userName = prefs.getString('UserName');
+      Navigator.pushReplacement(context,
+        MaterialPageRoute(builder:
+            (context) => userName == null?  const GettingStarted(): const Homepage()),
+      );
+    });
   }
 
   @override
