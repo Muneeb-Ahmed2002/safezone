@@ -20,11 +20,21 @@ class _SplashScreenState extends State<SplashScreen> {
       const Duration(seconds: 2), ()
     async {
       final prefs = await SharedPreferences.getInstance();
-      userName = prefs.getString('UserName');
-      Navigator.pushReplacement(context,
-        MaterialPageRoute(builder:
-            (context) => userName == null?  const GettingStarted(): const Homepage()),
-      );
+      userName = prefs.getString('userName');
+      name = prefs.getString('name');
+      if(userName == null){
+        Navigator.pushReplacement(context,
+          MaterialPageRoute(builder:
+              (context) => const GettingStarted()),
+        );
+      }
+      else{
+        Navigator.pushReplacement(context,
+          MaterialPageRoute(builder:
+              (context) => const Homepage()),
+        );
+      }
+
     });
   }
 

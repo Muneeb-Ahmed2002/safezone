@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:safezone/global%20variables.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -34,7 +35,7 @@ class _HomepageState extends State<Homepage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'User 001',
+              name!,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: colorScheme.onBackground,
               ),
