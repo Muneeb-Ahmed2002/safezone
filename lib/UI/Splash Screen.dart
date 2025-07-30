@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:safezone/UI/GettingStarted.dart';
 import 'package:safezone/UI/HomePage.dart';
 import 'package:safezone/global%20variables.dart';
+import 'package:safezone/services/notificationServices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,28 +14,37 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
+activityCheck() async {
+  final prefs = await SharedPreferences.getInstance();
+  userName = prefs.getString('userName');
+  name = prefs.getString('name');
+  if (userName == null) {
+    Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder:
+            (context) => const GettingStarted()), (route) => false
+    );
+  }
+  else {
+    Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder:
+            (context) => const Homepage()), (route) => false
+    );
+  }
+}
+NotificationServices notificationServices = NotificationServices();
+
   @override
   void initState() {
     super.initState();
-    Timer(
-      const Duration(seconds: 2), ()
-    async {
-      final prefs = await SharedPreferences.getInstance();
-      userName = prefs.getString('userName');
-      name = prefs.getString('name');
-      if(userName == null){
-        Navigator.pushReplacement(context,
-          MaterialPageRoute(builder:
-              (context) => const GettingStarted()),
-        );
-      }
-      else{
-        Navigator.pushReplacement(context,
-          MaterialPageRoute(builder:
-              (context) => const Homepage()),
-        );
-      }
+    notificationServices.requestNotificationPermision();
 
+    notificationServices.firebaseInit();
+
+    notificationServices.getDeviceToken().then((value) {
+      print('Device Token = $value');
+      Token = value;
+      Timer(const Duration(seconds: 2), () => activityCheck());
     });
   }
 
