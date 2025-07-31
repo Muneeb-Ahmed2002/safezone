@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:safezone/UI/GettingStarted.dart';
 import 'package:safezone/UI/HomePage.dart';
 import 'package:safezone/global%20variables.dart';
+import 'package:safezone/services/locationServices.dart';
 import 'package:safezone/services/notificationServices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,6 +17,20 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
+  sendLocationToFirebase(double latitude,double longitude) async {
+    List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+    String stAdd = '${placemarks.reversed.last.street!}, ${placemarks.reversed.last.locality!}, ${placemarks.reversed.last.country!}';
+    print(stAdd);
+    // await FirebaseFirestore.instance.collection('Users').doc(userName).set(
+    //     {
+    //       'longitude': longitude,
+    //       'latitude': longitude,
+    //       'address': stAdd,
+    //       'time': DateTime.now(),
+    //     });
+  }
 
 activityCheck() async {
   final prefs = await SharedPreferences.getInstance();
@@ -33,17 +50,28 @@ activityCheck() async {
   }
 }
 NotificationServices notificationServices = NotificationServices();
+LocationServices locationServices = LocationServices();
 
   @override
   void initState() {
     super.initState();
     notificationServices.requestNotificationPermision();
 
+    locationServices.requestLocationServices();
+
+
+
     notificationServices.firebaseInit();
+
+    locationServices.getLocationData().then((location){
+      print('Location: $location\n${locationServices.locationData.latitude}, ${locationServices.locationData.longitude}');
+      sendLocationToFirebase(locationServices.locationData.latitude!, locationServices.locationData.longitude!);
+    });
 
     notificationServices.getDeviceToken().then((value) {
       print('Device Token = $value');
       Token = value;
+
       Timer(const Duration(seconds: 2), () => activityCheck());
     });
   }
