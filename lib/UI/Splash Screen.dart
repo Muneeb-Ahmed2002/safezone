@@ -26,13 +26,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
     String stAdd = '${placemarks.reversed.last.street!}, ${placemarks.reversed.last.locality!}, ${placemarks.reversed.last.country!}';
     print('Current Location $stAdd');
-    // await FirebaseFirestore.instance.collection('Users').doc(userName).set(
-    //     {
-    //       'longitude': longitude,
-    //       'latitude': longitude,
-    //       'address': stAdd,
-    //       'time': DateTime.now(),
-    //     });
+    await FirebaseFirestore.instance.collection('Users').doc(userName).set(
+        {
+          'longitude': longitude,
+          'latitude': longitude,
+          'address': stAdd,
+          'time': DateTime.now(),
+        });
   }
 
 activityCheck() async {
