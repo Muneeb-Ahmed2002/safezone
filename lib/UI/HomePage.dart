@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:safezone/UI/aboutApp.dart';
 import 'package:safezone/global%20variables.dart';
 
 class Homepage extends StatefulWidget {
@@ -34,11 +35,22 @@ class _HomepageState extends State<Homepage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              name!,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onBackground,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  name!,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: colorScheme.onBackground,
+                  ),
+                ),
+                Text(
+                  userName!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
@@ -97,7 +109,9 @@ class _HomepageState extends State<Homepage> {
                     color: Colors.grey.shade300,
                     iconColor: Colors.black87,
                     onTap: () {
-                      // TODO: Navigate to about page
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context)=>const Aboutapp())
+                      );
                     },
                   ),
                 ],

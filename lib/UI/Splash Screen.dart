@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:safezone/UI/GettingStarted.dart';
 import 'package:safezone/UI/HomePage.dart';
 import 'package:safezone/global%20variables.dart';
@@ -18,22 +16,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  Future<void> sendLocationToFirebase(double latitude,double longitude) async {
 
-    print('$latitude, $longitude');
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
-
-    String stAdd = '${placemarks.reversed.last.street!}, ${placemarks.reversed.last.locality!}, ${placemarks.reversed.last.country!}';
-    print('Current Location $stAdd');
-    await FirebaseFirestore.instance.collection('Users').doc(userName).set(
-        {
-          'longitude': longitude,
-          'latitude': longitude,
-          'address': stAdd,
-          'time': DateTime.now(),
-        });
-  }
 
 activityCheck() async {
   final prefs = await SharedPreferences.getInstance();
@@ -46,6 +29,7 @@ activityCheck() async {
     );
   }
   else {
+    userExist = true;
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder:
             (context) => const Homepage()), (route) => false
@@ -76,7 +60,13 @@ LocationServices locationServices = LocationServices();
           location.latitude != null &&
           location.longitude != null) {
         print('Location Found $location');
-        sendLocationToFirebase(location.latitude!, location.longitude!);
+        latitude = location.latitude!;
+        longitude = location.longitude!;
+        if(userExist){
+          sendLocationToFirebase(location.latitude!, location.longitude!);
+        }
+        print('In Device Memory: $latitude, $longitude, $userExist');
+        print(DateTime.now());
       }});
   }
 

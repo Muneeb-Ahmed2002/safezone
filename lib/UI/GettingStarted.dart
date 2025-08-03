@@ -93,8 +93,9 @@ class _GettingStartedState extends State<GettingStarted> {
                     await doc.doc(userName!).set({
                       'userName' : userName!,
                       'Name' : name!,
+                      'time' :DateTime.now(),
                     });
-
+                    sendLocationToFirebase(latitude, longitude);
                     Navigator.pushReplacement(context,
                         MaterialPageRoute(builder: (context) => const Homepage()));
                   }
@@ -188,7 +189,7 @@ class _ExistingUserState extends State<ExistingUser> {
                       prefs.setString('userName', userName!);
                       prefs.setString('name', name!);
                       print('$name $userName');
-
+                      sendLocationToFirebase(latitude, longitude);
                       Navigator.pushReplacement(context,
                           MaterialPageRoute(builder: (context) => const Homepage()));
                     }
