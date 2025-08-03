@@ -18,11 +18,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  sendLocationToFirebase(double latitude,double longitude) async {
+  Future<void> sendLocationToFirebase(double latitude,double longitude) async {
+
+    print('$latitude, $longitude');
+
     List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
 
     String stAdd = '${placemarks.reversed.last.street!}, ${placemarks.reversed.last.locality!}, ${placemarks.reversed.last.country!}';
-    print(stAdd);
+    print('Current Location $stAdd');
     // await FirebaseFirestore.instance.collection('Users').doc(userName).set(
     //     {
     //       'longitude': longitude,
@@ -59,21 +62,22 @@ LocationServices locationServices = LocationServices();
 
     locationServices.requestLocationServices();
 
-
-
     notificationServices.firebaseInit();
 
-    locationServices.getLocationData().then((location){
-      print('Location: $location\n${locationServices.locationData.latitude}, ${locationServices.locationData.longitude}');
-      sendLocationToFirebase(locationServices.locationData.latitude!, locationServices.locationData.longitude!);
-    });
 
     notificationServices.getDeviceToken().then((value) {
       print('Device Token = $value');
       Token = value;
-
       Timer(const Duration(seconds: 2), () => activityCheck());
     });
+    locationServices.getLocationData().then((location){
+      print('checking location');
+      if (location != null &&
+          location.latitude != null &&
+          location.longitude != null) {
+        print('Location Found $location');
+        sendLocationToFirebase(location.latitude!, location.longitude!);
+      }});
   }
 
   @override
