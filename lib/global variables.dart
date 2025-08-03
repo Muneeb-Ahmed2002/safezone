@@ -62,6 +62,7 @@ Future<void> sendLocationToFirebase(double latitude,double longitude) async {
             'longitude': longitude,
             'latitude': longitude,
             'address': stAdd,
+            'deviceToken' : Token,
             'time': DateTime.now(),
           });
     }
