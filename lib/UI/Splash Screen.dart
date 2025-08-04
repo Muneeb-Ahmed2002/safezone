@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:safezone/UI/GettingStarted.dart';
 import 'package:safezone/UI/HomePage.dart';
 import 'package:safezone/global%20variables.dart';
-import 'package:safezone/services/locationServices.dart';
 import 'package:safezone/services/notificationServices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/locationServices.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -42,32 +43,18 @@ LocationServices locationServices = LocationServices();
   @override
   void initState() {
     super.initState();
-    notificationServices.requestNotificationPermision();
-
     locationServices.requestLocationServices();
 
-    notificationServices.firebaseInit();
+    notificationServices.requestNotificationPermision();
 
+    notificationServices.firebaseInit();
 
     notificationServices.getDeviceToken().then((value) {
       print('Device Token = $value');
       Token = value;
       Timer(const Duration(seconds: 2), () => activityCheck());
     });
-    locationServices.getLocationData().then((location){
-      print('checking location');
-      if (location != null &&
-          location.latitude != null &&
-          location.longitude != null) {
-        print('Location Found $location');
-        latitude = location.latitude!;
-        longitude = location.longitude!;
-        if(userExist){
-          sendLocationToFirebase(location.latitude!, location.longitude!);
-        }
-        print('In Device Memory: $latitude, $longitude, $userExist');
-        print(DateTime.now());
-      }});
+
   }
 
   @override

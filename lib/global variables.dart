@@ -60,7 +60,7 @@ Future<void> sendLocationToFirebase(double latitude,double longitude) async {
       await FirebaseFirestore.instance.collection('Users').doc(userName).update(
           {
             'longitude': longitude,
-            'latitude': longitude,
+            'latitude': latitude,
             'address': stAdd,
             'deviceToken' : Token,
             'time': DateTime.now(),

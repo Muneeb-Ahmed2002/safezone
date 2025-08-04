@@ -10,11 +10,6 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  @override
-  void initState() {
-    super.initState();
-    // You can add your data-fetching logic here
-  }
 
   @override
   Widget build(BuildContext context) {
