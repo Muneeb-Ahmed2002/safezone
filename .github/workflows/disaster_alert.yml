@@ -1,0 +1,36 @@
+name: Disaster Data Updater
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+  workflow_dispatch:
+
+jobs:
+  update-disasters:
+    runs-on: ubuntu-latest
+
+    env:
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+      FCM_SERVER_KEY: ${{ secrets.FCM_SERVER_KEY }}
+      OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install firebase-admin axios
+
+      - name: Decode Firebase credentials
+        run: |
+          echo "${GOOGLE_APPLICATION_CREDENTIALS_JSON}" | base64 -d > serviceAccountKey.json
+
+      - name: Run Disaster Updater
+        run: node updateDisasters.js
