@@ -63,29 +63,32 @@ async function processEarthquakes(users) {
   }
 }
 
-async function processGDACS(users) {
-  const url = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?alertlevel=red,orange&eventtype=FL,TC';
-  const res = await axios.get(url);
-  const events = res.data.results;
+async function processGDACS() {
+  const response = await fetch("https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP");
+  const gdacsData = await response.json();
+
+  const events = Array.isArray(gdacsData?.features) ? gdacsData.features : [];
 
   for (const event of events) {
-    const lat = parseFloat(event.latitude);
-    const lon = parseFloat(event.longitude);
-    const type = event.eventtype === 'FL' ? 'floods' : 'cyclones';
+    const props = event.properties;
+    const coords = event.geometry.coordinates;
 
-    for (const user of users) {
-      const dist = getDistanceFromLatLonInKm(lat, lon, user.latitude, user.longitude);
-      if (dist < RADIUS_KM) {
-        await pushToFirebase(type, {
-          user: user.userName,
-          location: event.country,
-          title: event.eventname,
-          time: new Date().toISOString(),
-          userLat: user.latitude,
-          userLon: user.longitude
-        });
-      }
-    }
+    const data = {
+      type: props.eventtype,
+      country: props.country,
+      description: props.description,
+      alertLevel: props.alertlevel,
+      fromDate: props.fromdate,
+      toDate: props.todate,
+      latitude: coords[1],
+      longitude: coords[0],
+      url: props.url?.details || null,
+      timestamp: new Date().toISOString()
+    };
+
+    const docRef = doc(firestore, `disasters_${props.eventtype.toLowerCase()}`, `${props.eventid}`);
+    await setDoc(docRef, data, { merge: true });
+    console.log(`GDACS event stored: ${props.eventid}`);
   }
 }
 
@@ -111,13 +114,24 @@ async function processHeatwaves(users) {
 async function main() {
   try {
     const users = await getUsers();
-    await processEarthquakes(users);
-    await processGDACS(users);
-    await processHeatwaves(users);
-    console.log('✅ Disaster data successfully pushed.');
+    try {
+      await processGDACS();
+    } catch (err) {
+      console.error("Error in GDACS:", err);
+    }
+    try {
+          await processEarthquakes(users);
+        } catch (err) {
+          console.error("Error in GDACS:", err);
+        }
+    try {
+              await processHeatwaves(users);;
+            } catch (err) {
+              console.error("Error in GDACS:", err);
+            }
+    console.log('Disaster data successfully pushed.');
   } catch (err) {
     console.error('Error:', err);
-    process.exit(1);
   }
 }
 
