@@ -23,6 +23,22 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+// Map GDACS codes to full disaster names & collection names
+function mapGDACSTypeToCollection(eventType) {
+  switch (eventType) {
+    case "EQ":
+      return { collection: "earthquakes", name: "Earthquake" };
+    case "TC":
+      return { collection: "tropical_cyclones", name: "Tropical Cyclone" };
+    case "FL":
+      return { collection: "floods", name: "Flood" };
+    case "VU":
+      return { collection: "volcanic_activity", name: "Volcanic Activity" };
+    default:
+      return { collection: "other_disasters", name: eventType };
+  }
+}
+
 // Get users from Firestore
 async function getUsers() {
   const usersSnapshot = await db.collection(USERS_COLLECTION).get();
@@ -42,10 +58,7 @@ async function sendNotification(user, title, body) {
   if (!user.fcmToken) return;
   const message = {
     token: user.fcmToken,
-    notification: {
-      title,
-      body,
-    },
+    notification: { title, body },
   };
   try {
     await admin.messaging().send(message);
@@ -71,14 +84,13 @@ async function processEarthquakes(users) {
       location: eq.properties.place,
       time: new Date(eq.properties.time).toISOString(),
       url: eq.properties.url,
-      type: eq.properties.type,
+      type: "Earthquake",
       depth,
       lat,
       lon,
       timestamp: new Date().toISOString(),
     };
 
-    // Prevent duplicates using event ID
     await pushToFirebase("earthquakes", data, eq.id);
 
     // Notify users within 400 km if magnitude >= 4.5
@@ -120,13 +132,16 @@ async function processGDACS(users) {
     const fromDate = new Date(props.fromdate);
     const toDate = props.todate ? new Date(props.todate) : null;
 
-    // Skip events that ended more than a day ago
+    // Skip events older than 1 day
     if (fromDate < oneDayAgo && (!toDate || toDate < oneDayAgo)) {
       continue;
     }
 
+    // Map GDACS type to collection & name
+    const { collection, name } = mapGDACSTypeToCollection(props.eventtype);
+
     const data = {
-      type: props.eventtype,
+      type: name,
       country: props.country,
       description: props.description,
       alertLevel: props.alertlevel,
@@ -138,11 +153,7 @@ async function processGDACS(users) {
       timestamp: new Date().toISOString(),
     };
 
-    await pushToFirebase(
-      `disasters_${props.eventtype.toLowerCase()}`,
-      data,
-      props.eventid.toString()
-    );
+    await pushToFirebase(collection, data, props.eventid.toString());
 
     // Send notifications for high alert events within 400 km
     if (["Orange", "Red"].includes(props.alertlevel)) {
@@ -156,7 +167,7 @@ async function processGDACS(users) {
         if (distance <= 400) {
           await sendNotification(
             user,
-            `${props.eventtype} Alert (${props.alertlevel})`,
+            `${name} Alert (${props.alertlevel})`,
             `${props.description} in ${props.country}`
           );
         }
