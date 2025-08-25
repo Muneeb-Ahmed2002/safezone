@@ -177,32 +177,60 @@ async function processGDACS(users) {
 }
 
 /**
- * Process Weather for each user
+ * Process forecast-based heatwave alerts for users
+ * - Uses OpenWeatherMap 5-day / 3-hour forecast
+ * - Sends notification once per user per day
+ * - Stores forecast event in Firebase to avoid duplicates
  */
 async function processWeather(users) {
   for (const user of users) {
-    if (!user.latitude || !user.longitude) continue;
+    try {
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${user.latitude}&lon=${user.longitude}&appid=${process.env.OPENWEATHER_API_KEY}&units=metric`;
+      const res = await axios.get(url);
+      const forecasts = Array.isArray(res.data?.list) ? res.data.list : [];
 
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${user.latitude}&lon=${user.longitude}&appid=${process.env.OPENWEATHER_API_KEY}&units=metric`;
-    const res = await axios.get(url);
-    const temp = res.data.main.temp;
+      for (const forecast of forecasts) {
+        const forecastDate = forecast.dt_txt.split(" ")[0]; // YYYY-MM-DD
+        const temp = forecast.main.temp;
 
-    const data = {
-      user: user.userName,
-      location: res.data.name,
-      temperature: temp,
-      time: new Date().toISOString(),
-      userLat: user.latitude,
-      userLon: user.longitude,
-    };
+        // Define heatwave threshold
+        if (temp >= 40) {
+          const alertId = `${user.userName}_${forecastDate}_heatwave`;
 
-    await pushToFirebase(
-      "weather",
-      data,
-      `${user.userName}_${Date.now()}`
-    );
+          // Check if user already alerted for this day
+          const alreadyAlerted = await checkIfDocExists("alerts", alertId);
+          if (alreadyAlerted) continue;
+
+          // Store heatwave forecast in Firebase
+          const data = {
+            type: "Heatwave",
+            user: user.userName,
+            temperature: temp,
+            forecastTime: forecast.dt_txt,
+            latitude: user.latitude,
+            longitude: user.longitude,
+            timestamp: new Date().toISOString(),
+          };
+
+          await pushToFirebase("heatwaves", data, alertId);
+
+          // Send notification once
+          await sendNotification(
+            user,
+            "Heatwave Alert",
+            `Forecasted temperature of ${temp}°C on ${forecast.dt_txt}. Stay safe!`
+          );
+
+          // Mark as alerted
+          await pushToFirebase("alerts", { alerted: true }, alertId);
+        }
+      }
+    } catch (err) {
+      console.error(`Error processing weather for user ${user.userName}:`, err.message);
+    }
   }
 }
+
 
 /**
  * Main Orchestrator
