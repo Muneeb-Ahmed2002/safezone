@@ -20,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
 
 activityCheck() async {
+  locationServices.requestLocationServices();
   final prefs = await SharedPreferences.getInstance();
   userName = prefs.getString('userName');
   name = prefs.getString('name');
@@ -43,7 +44,6 @@ LocationServices locationServices = LocationServices();
   @override
   void initState() {
     super.initState();
-    locationServices.requestLocationServices();
 
     notificationServices.requestNotificationPermision();
 
