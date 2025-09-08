@@ -69,3 +69,11 @@ Future<void> sendLocationToFirebase(double latitude,double longitude) async {
   });
 
 }
+Future<String> getLocationFromLatLon(latitude, longitude) async{
+  List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+  String stAdd = '${placemarks.reversed.last.locality!}, ${placemarks.reversed.last.country!}';
+
+  print(stAdd);
+  return stAdd;
+}
