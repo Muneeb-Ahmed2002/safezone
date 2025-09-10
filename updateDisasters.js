@@ -23,6 +23,11 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+async function checkIfDocExists(collection, docId) {
+  const doc = await db.collection(collection).doc(docId).get();
+  return doc.exists;
+}
+
 // Map GDACS codes to full disaster names & collection names
 function mapGDACSTypeToCollection(eventType) {
   switch (eventType) {

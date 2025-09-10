@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:safezone/global%20variables.dart';
+import 'package:http/http.dart' as http;
 
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
@@ -13,175 +13,230 @@ class AlertsPage extends StatefulWidget {
 }
 
 class _AlertsPageState extends State<AlertsPage> {
+  bool earthquakeActive = false;
+  bool floodActive = false;
+  bool cycloneActive = false;
+  bool volcanoActive = false;
+  bool heatwaveActive = false;
+  final DateTime threeDaysAgo = DateTime.now().subtract(const Duration(days: 3));
 
-  Future fetchEarthquakeMagnitude(url)async {
+  Future fetchEarthquakeMagnitude(String url) async {
     final res = await http.get(Uri.parse(url));
     final data = jsonDecode(res.body);
     return data['properties'];
   }
-  bool earthquakeActive = false;
-  bool floodActive = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alerts'),
         centerTitle: true,
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0), // Adjust corner radius
-                side: BorderSide(
-                  color: colorScheme.primaryContainer, // Border color
-                  width: 3.0, // Border width
-                ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    onTap: (){
-                      setState(() {
-                        earthquakeActive = !earthquakeActive;
-                      });
-                    },
-                    splashColor: colorScheme.primary.withAlpha(80),
-                    contentPadding: const EdgeInsets.all(16),
-                    title: const Text('Earthquakes', style: TextStyle(fontSize: 32),),
-                    trailing: Icon(earthquakeActive? Icons.keyboard_arrow_down:Icons.arrow_forward_ios, size:earthquakeActive? 50:20,),
-                  ),
-                  if(earthquakeActive)
-                    // SizedBox.shrink(),
-                    StreamBuilder(
-                      stream: FirebaseFirestore.instance.collection('earthquakes')
-                          .orderBy('timestamp', descending: true).snapshots(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const CircularProgressIndicator();
-                        return SingleChildScrollView(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: MediaQuery.sizeOf(context).height / 1.5,
-                            ),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: snapshot.data?.docs.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                String? exist = snapshot.data?.docs[index]
-                                    .data()
-                                    .toString();
-        
-                                if(exist?.contains('description') == true) {
-                                  String? magnitude;
-                                  fetchEarthquakeMagnitude(snapshot.data?.docs[index]['url']).then((value){
-                                    magnitude = value['earthquakedetails']["magnitude"];
-                                    print("Magnitude: $magnitude");
-        
-                                  });
-                                  return ListTile(
-                                    title: Text(snapshot.data?.docs[index]['description']),
-                                    subtitle: Text('Magnitude: $magnitude'),
-                                  );
-        
-                                } else if(exist?.contains('location') == true){
-                                  return ListTile(
-                                    title: Text(snapshot.data!.docs[index]['location'].toString()),
-                                    subtitle: Text("Magnitude: ${snapshot.data!.docs[index]['magnitude']}"),
-                                  );
-                                }
-                                return const Text('No Data Available');
-                              },
-                            ),
-                          ),
-                        );
+            _buildDisasterCard(
+              title: "Earthquakes",
+              active: earthquakeActive,
+              onTap: () => setState(() {
+                earthquakeActive = !earthquakeActive;
+                floodActive = cycloneActive = volcanoActive = heatwaveActive = false;
+              }),
+              stream: FirebaseFirestore.instance
+                  .collection('earthquakes')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              itemBuilder: (doc) {
+                if (doc.data().toString().contains('description')) {
+                  return FutureBuilder(
+                    future: fetchEarthquakeMagnitude(doc['url']),
+                    builder: (context, magSnapshot) {
+                      if (!magSnapshot.hasData) {
+                        return const ListTile(title: Text("Loading earthquake..."));
                       }
-                    ),
-                ],
-              ),
+                      final magnitude = magSnapshot.data['earthquakedetails']["magnitude"];
+                      return ListTile(
+                        title: Text(doc['description']),
+                        subtitle: Text("Magnitude: $magnitude"),
+                      );
+                    },
+                  );
+                } else {
+                  return ListTile(
+                    title: Text(doc['location']),
+                    subtitle: Text("Magnitude: ${doc['magnitude']}"),
+                  );
+                }
+              },
             ),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0), // Adjust corner radius
-                side: BorderSide(
-                  color: colorScheme.primaryContainer, // Border color
-                  width: 3.0, // Border width
+
+            _buildDisasterCard(
+              title: "Floods",
+              active: floodActive,
+              onTap: () => setState(() {
+                floodActive = !floodActive;
+                earthquakeActive = cycloneActive = volcanoActive = heatwaveActive = false;
+              }),
+              stream: FirebaseFirestore.instance
+                  .collection('floods')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              itemBuilder: (doc) {
+                return FutureBuilder<String>(
+                  future: getLocationFromLatLon(doc['latitude'], doc['longitude']),
+                  builder: (context, snapshot) {
+                    final location = snapshot.data ?? "Loading location...";
+                    return ListTile(
+                      title: Text(doc['description'] ?? "No description"),
+                      subtitle: Text("Location: $location • Alert: ${doc['alertLevel'] ?? 'N/A'}"),
+                    );
+                  },
+                );
+              },
+            ),
+
+            _buildDisasterCard(
+              title: "Tropical Cyclones",
+              active: cycloneActive,
+              onTap: () => setState(() {
+                cycloneActive = !cycloneActive;
+                earthquakeActive = floodActive = volcanoActive = heatwaveActive = false;
+              }),
+              stream: FirebaseFirestore.instance
+                  .collection('tropical_cyclones')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              itemBuilder: (doc) => ListTile(
+                title: Text(doc['description'] ?? "No description"),
+                subtitle: Text(
+                  "Country: ${doc['country'] == ""? 'N/A': doc['country']} • Alert: ${doc['alertLevel'] ?? 'N/A'}",
                 ),
               ),
-              child: Column(
-                children: [
-                  ListTile(
-                    onTap: (){
-                      setState(() {
-                        floodActive = !floodActive;
-                      });
-                    },
-                    splashColor: colorScheme.primary.withAlpha(80),
-                    contentPadding: const EdgeInsets.all(16),
-                    title: const Text('Floods', style: TextStyle(fontSize: 32),),
-                    trailing: Icon(floodActive? Icons.keyboard_arrow_down:Icons.arrow_forward_ios, size:floodActive? 50:20,),
-                  ),
-                  if(floodActive)
-                  // SizedBox.shrink(),
-                    StreamBuilder(
-                        stream: FirebaseFirestore.instance.collection('floods')
-                            .orderBy('timestamp', descending: true).snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) return const CircularProgressIndicator();
-                          return SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight: MediaQuery.sizeOf(context).height / 1.5,
-                              ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                itemCount: snapshot.data?.docs.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  String? exist = snapshot.data?.docs[index]
-                                      .data()
-                                      .toString();
-                                  if(!snapshot.hasData){
-                                    bool loading = true;
-                                    Future.delayed(const Duration(seconds: 5),()=> loading = false);
-                                    return loading? const Column(
-                                    children: [
-                                      CircularProgressIndicator(),
-                                      Text('Loading Data'),
-                                    ],
-                                  ): const Text('No Data Available');
-                                  }
-                                  String? country;
-                                  getLocationFromLatLon(snapshot.data?.docs[index]['latitude'], snapshot.data?.docs[index]['longitude']).then((value){
-                                    print(value);
-                                      country = value;
-                                  });
+            ),
 
-                                    return ListTile(
-                                      title: Text(snapshot.data?.docs[index]['description']),
-                                      subtitle: Text('Location: $country'),
-                                    );
-        
-                                },
-                              ),
-                            ),
-                          );
-                        }
-                    ),
-                ],
+            _buildDisasterCard(
+              title: "Volcanic Activity",
+              active: volcanoActive,
+              onTap: () => setState(() {
+                volcanoActive = !volcanoActive;
+                earthquakeActive = floodActive = cycloneActive = heatwaveActive = false;
+              }),
+              stream: FirebaseFirestore.instance
+                  .collection('volcanic_activity')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              itemBuilder: (doc) {
+                return FutureBuilder<String>(
+                  future: getLocationFromLatLon(doc['latitude'], doc['longitude']),
+                  builder: (context, snapshot) {
+                    final location = snapshot.data ?? "Loading location...";
+                    return ListTile(
+                      title: Text(doc['description'] ?? "No description"),
+                      subtitle: Text(
+                        "Location: $location • Alert: ${doc['alertLevel'] ?? 'N/A'}",
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+
+
+            _buildDisasterCard(
+              title: "Heatwaves",
+              active: heatwaveActive,
+              onTap: () => setState(() {
+                heatwaveActive = !heatwaveActive;
+                earthquakeActive = floodActive = cycloneActive = volcanoActive = false;
+              }),
+              stream: FirebaseFirestore.instance
+                  .collection('heatwaves')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              itemBuilder: (doc) => ListTile(
+                title: const Text("Forecasted Heatwave"),
+                subtitle: Text(
+                  "Temp: ${doc['temperature']}°C at ${doc['forecastTime'] ?? 'N/A'}",
+                ),
               ),
             ),
-        
           ],
         ),
-      )
+      ),
+    );
+  }
+
+  /// Reusable card builder for each disaster type
+  Widget _buildDisasterCard({
+    required String title,
+    required bool active,
+    required VoidCallback onTap,
+    required Stream<QuerySnapshot<Map<String, dynamic>>> stream,
+    required Widget Function(QueryDocumentSnapshot<Map<String, dynamic>> doc) itemBuilder,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30.0),
+        side: BorderSide(color: colorScheme.primaryContainer, width: 3.0),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            onTap: onTap,
+            splashColor: colorScheme.primary.withAlpha(80),
+            contentPadding: const EdgeInsets.all(16),
+            title: Text(title, style: const TextStyle(fontSize: 28)),
+            trailing: Icon(
+              active ? Icons.keyboard_arrow_down : Icons.arrow_forward_ios,
+              size: active ? 40 : 20,
+            ),
+          ),
+          if (active)
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: stream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        Text('Loading Data'),
+                      ],
+                    ),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const ListTile(
+                    title: Text("No data available"),
+                  );
+                }
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = snapshot.data!.docs[index];
+                      return itemBuilder(doc);
+                    },
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

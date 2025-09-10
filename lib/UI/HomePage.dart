@@ -66,53 +66,47 @@ class _HomepageState extends State<Homepage> {
 
             // Grid of buttons
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1, // square tiles
-                children: [
-                  GridOptionButton(
-                    icon: Icons.warning_amber_rounded,
-                    label: 'View Alerts',
-                    color: colorScheme.primaryContainer,
-                    iconColor: colorScheme.onPrimaryContainer,
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context)=>const AlertsPage())
-                      );
-                    },
-                  ),
-                  GridOptionButton(
-                    icon: Icons.health_and_safety,
-                    label: 'Safety Tips',
-                    color: colorScheme.secondaryContainer,
-                    iconColor: colorScheme.onSecondaryContainer,
-                    onTap: () {
-                      // TODO: Navigate to safety tips
-                    },
-                  ),
-                  GridOptionButton(
-                    icon: Icons.history,
-                    label: 'Alert History',
-                    color: colorScheme.tertiaryContainer,
-                    iconColor: colorScheme.onTertiaryContainer,
-                    onTap: () {
-                      // TODO: Navigate to history
-                    },
-                  ),
-                  GridOptionButton(
-                    icon: Icons.info_outline,
-                    label: 'About App',
-                    color: Colors.grey.shade300,
-                    iconColor: Colors.black87,
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context)=>const Aboutapp())
-                      );
-                    },
-                  ),
-                ],
+              child: Center(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 1, // square tiles
+                  children: [
+                    GridOptionButton(
+                      icon: Icons.warning_amber_rounded,
+                      label: 'View Alerts',
+                      color: colorScheme.primaryContainer,
+                      iconColor: colorScheme.onPrimaryContainer,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context)=>const AlertsPage())
+                        );
+                      },
+                    ),
+                    GridOptionButton(
+                      icon: Icons.health_and_safety,
+                      label: 'Safety Tips',
+                      color: colorScheme.secondaryContainer,
+                      iconColor: colorScheme.onSecondaryContainer,
+                      onTap: () {
+                        // TODO: Navigate to safety tips
+                      },
+                    ),
+                    GridOptionButton(
+                      icon: Icons.info_outline,
+                      label: 'About App',
+                      color: Colors.grey.shade300,
+                      iconColor: Colors.black87,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context)=>const Aboutapp())
+                        );
+                      },
+                    ),
+
+                  ],
+                ),
               ),
             ),
           ],
