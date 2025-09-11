@@ -63,6 +63,7 @@ class _AlertsPageState extends State<AlertsPage> {
                       return ListTile(
                         title: Text(doc['description']),
                         subtitle: Text("Magnitude: $magnitude"),
+                        trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
                       );
                     },
                   );
@@ -70,6 +71,7 @@ class _AlertsPageState extends State<AlertsPage> {
                   return ListTile(
                     title: Text(doc['location']),
                     subtitle: Text("Magnitude: ${doc['magnitude']}"),
+                    trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
                   );
                 }
               },
@@ -94,6 +96,7 @@ class _AlertsPageState extends State<AlertsPage> {
                     return ListTile(
                       title: Text(doc['description'] ?? "No description"),
                       subtitle: Text("Location: $location • Alert: ${doc['alertLevel'] ?? 'N/A'}"),
+                      trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
                     );
                   },
                 );
@@ -116,6 +119,7 @@ class _AlertsPageState extends State<AlertsPage> {
                 subtitle: Text(
                   "Country: ${doc['country'] == ""? 'N/A': doc['country']} • Alert: ${doc['alertLevel'] ?? 'N/A'}",
                 ),
+                trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
               ),
             ),
 
@@ -140,6 +144,7 @@ class _AlertsPageState extends State<AlertsPage> {
                       subtitle: Text(
                         "Location: $location • Alert: ${doc['alertLevel'] ?? 'N/A'}",
                       ),
+                      trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
                     );
                   },
                 );
@@ -163,6 +168,7 @@ class _AlertsPageState extends State<AlertsPage> {
                 subtitle: Text(
                   "Temp: ${doc['temperature']}°C at ${doc['forecastTime'] ?? 'N/A'}",
                 ),
+                trailing: Text("${DateTime.tryParse(doc['timestamp']) ?? DateTime.now()}"),
               ),
             ),
           ],
@@ -229,6 +235,13 @@ class _AlertsPageState extends State<AlertsPage> {
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (context, index) {
                       final doc = snapshot.data!.docs[index];
+                      final tsField = doc['timestamp'];
+                      DateTime ts = DateTime.now();
+                      if (tsField is String) {
+                        ts = DateTime.tryParse(tsField) ?? DateTime.now();
+                      }
+                      final threeDaysAgo = DateTime.now().subtract(const Duration(days: 3));
+                      if (ts.isBefore(threeDaysAgo)) return const SizedBox.shrink(); // skip old records
                       return itemBuilder(doc);
                     },
                   ),

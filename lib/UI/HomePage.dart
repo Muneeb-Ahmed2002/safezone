@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safezone/UI/Alerts.dart';
+import 'package:safezone/UI/SafetyTips.dart';
 import 'package:safezone/UI/aboutApp.dart';
 import 'package:safezone/global%20variables.dart';
 
@@ -90,7 +91,9 @@ class _HomepageState extends State<Homepage> {
                       color: colorScheme.secondaryContainer,
                       iconColor: colorScheme.onSecondaryContainer,
                       onTap: () {
-                        // TODO: Navigate to safety tips
+                        Navigator.push(context, MaterialPageRoute(
+                          builder: (context)=>const SafetyTips())
+                      );
                       },
                     ),
                     GridOptionButton(
