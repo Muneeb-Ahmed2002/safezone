@@ -190,8 +190,9 @@ class _ExistingUserState extends State<ExistingUser> {
                       prefs.setString('name', name!);
                       print('$name $userName');
                       sendLocationToFirebase(latitude, longitude);
-                      Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => const Homepage()));
+                      Navigator.pushAndRemoveUntil(context,
+                          MaterialPageRoute(builder: (context) => const Homepage()),
+                              (route) => false);
                     }
 
                   }

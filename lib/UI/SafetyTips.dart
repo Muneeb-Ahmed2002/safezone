@@ -19,7 +19,7 @@ class SafetyTips extends StatelessWidget {
       length: _tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Alerts'),
+          title: const Text('Safety Tips'),
           centerTitle: true,
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
